@@ -1,100 +1,79 @@
-import './style.css'
 
+import './style.css';
 import * as THREE from 'three';
-
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
-//Always need three things
+// Setup
 
-// 1. a Scene
-// 2. a Camera
-// 3. a Renderer
-
-// 1: a Scene is like a container that holds all of your objects, cameras and lights.
 const scene = new THREE.Scene();
 
-// 2: Perspective Camera (Mimic human eye balls).
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
-// 3: Renderer
-const renderer = new THREE.WebGL1Renderer({
+const renderer = new THREE.WebGLRenderer({
   canvas: document.querySelector('#bg'),
 });
 
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
 camera.position.setZ(30);
+camera.position.setX(-3);
 
 renderer.render(scene, camera);
 
+// Torus
 
-// Add Object to render
-// Geometry = the {x,y,z} points that makeup a shape.
-const geometry = new THREE.TorusGeometry(10, 3, 15, 100);
-
-// Add Material
-// Material = the wrapping paper fro an object.
-const material = new THREE.MeshStandardMaterial( { color: 0xFF6347} );
-
-// Add Mesh
-// Mesh = geometry + material 
+const geometry = new THREE.TorusGeometry(10, 3, 16, 100);
+const material = new THREE.MeshStandardMaterial({ color: 0xff6347 });
 const torus = new THREE.Mesh(geometry, material);
 
-// Add Mesh to the scene.
 scene.add(torus);
 
-// Add lighting
-// PointLight is a good beginner light. Like turning on a lightbulb in a room.
+// Lights
+
 const pointLight = new THREE.PointLight(0xffffff);
+pointLight.position.set(5, 5, 5);
 
-// Position light.
-pointLight.position.set(20, 20, 20);
-
-// Ambient light.
 const ambientLight = new THREE.AmbientLight(0xffffff);
+scene.add(pointLight, ambientLight);
 
-// Add light to scene.
-scene.add(pointLight,ambientLight);
- 
-// Helper. Show us the posistion of a pointlight.
-const lightHelper = new THREE.PointLightHelper(pointLight);
-const gridHelper = new THREE.GridHelper(200, 50);
-scene.add(lightHelper);
-scene.add(gridHelper);
+// Helpers
 
-const controls = new OrbitControls(camera, renderer.domElement);
+// const lightHelper = new THREE.PointLightHelper(pointLight)
+// const gridHelper = new THREE.GridHelper(200, 50);
+// scene.add(lightHelper, gridHelper)
+
+// const controls = new OrbitControls(camera, renderer.domElement);
 
 function addStar() {
   const geometry = new THREE.SphereGeometry(0.25, 24, 24);
   const material = new THREE.MeshStandardMaterial({ color: 0xffffff });
-  const star = new THREE.Mesh( geometry, material);
+  const star = new THREE.Mesh(geometry, material);
 
-  // Random Star Position
-  const [x, y, z] = Array(3).fill().map(() => THREE.MathUtils.randFloatSpread(100))
+  const [x, y, z] = Array(3)
+    .fill()
+    .map(() => THREE.MathUtils.randFloatSpread(100));
+
   star.position.set(x, y, z);
   scene.add(star);
 }
 
-// How Many Stars
 Array(200).fill().forEach(addStar);
 
-// Add Background (of space)
+// Background
+
 const spaceTexture = new THREE.TextureLoader().load('space.jpg');
 scene.background = spaceTexture;
 
+// Avatar
 
-// Avatar.
-const bradTexture = new THREE.TextureLoader().load('bradTexture.png');
+const jeffTexture = new THREE.TextureLoader().load('bradTexture.png');
 
-const brad = new THREE.Mesh(
-  new THREE.BoxGeometry(3, 3, 3),
-  new THREE.MeshBasicMaterial({map: bradTexture})
-);
+const jeff = new THREE.Mesh(new THREE.BoxGeometry(3, 3, 3), new THREE.MeshBasicMaterial({ map: jeffTexture }));
 
-scene.add(brad);
-
+scene.add(jeff);
 
 // Moon
+
 const moonTexture = new THREE.TextureLoader().load('moon.jpg');
 const normalTexture = new THREE.TextureLoader().load('normal.jpg');
 
@@ -102,26 +81,53 @@ const moon = new THREE.Mesh(
   new THREE.SphereGeometry(3, 32, 32),
   new THREE.MeshStandardMaterial({
     map: moonTexture,
-    normalMap: normalTexture
+    normalMap: normalTexture,
   })
 );
+
 scene.add(moon);
+
 moon.position.z = 30;
 moon.position.setX(-10);
 
+jeff.position.z = -5;
+jeff.position.x = 2;
 
-function animate(){
+// Scroll Animation
+
+function moveCamera() {
+  const t = document.body.getBoundingClientRect().top;
+  moon.rotation.x += 0.05;
+  moon.rotation.y += 0.075;
+  moon.rotation.z += 0.05;
+
+  jeff.rotation.y += 0.01;
+  jeff.rotation.z += 0.01;
+
+  camera.position.z = t * -0.01;
+  camera.position.x = t * -0.0002;
+  camera.rotation.y = t * -0.0002;
+}
+
+document.body.onscroll = moveCamera;
+moveCamera();
+
+// Animation Loop
+
+function animate() {
   requestAnimationFrame(animate);
 
   torus.rotation.x += 0.01;
   torus.rotation.y += 0.005;
   torus.rotation.z += 0.01;
 
+  moon.rotation.x += 0.005;
 
-  controls.update();
+  // controls.update();
 
   renderer.render(scene, camera);
 }
 
-// Need to rerender the scene to see newly added Mesh
 animate();
+
+
